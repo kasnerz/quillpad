@@ -111,12 +111,22 @@ class NoteRepositoryImpl(
                 when (action) {
                     is NoteAction.Create -> {
                         val syncNote = action.remoteNote
-                        val noteId = insertNote(syncNote.toLocalNote(defaultPinned = false), sync = false)
+                        // Nothing local to keep, so anything the remote note has
+                        // attached is downloaded outright.
+                        val attachments = syncProvider.resolveAttachments(syncNote.attachments, emptyList())
+                        val localNote = syncNote.toLocalNote(defaultPinned = false).copy(attachments = attachments)
+                        val noteId = insertNote(localNote, sync = false)
                         idMappingDao.insert(syncNote.getMapping(noteId, syncProvider.type))
                     }
 
                     is NoteAction.Update -> {
                         val mergedNote = action.remoteNote.updateLocalNote(action.note)
+                            .copy(
+                                attachments = syncProvider.resolveAttachments(
+                                    action.remoteNote.attachments,
+                                    action.note.attachments,
+                                )
+                            )
                         val note = if (action.note.isList) {
                             val tasks = mergedNote.mdToTaskList(mergedNote.content)
                             mergedNote.copy(content = "", taskList = tasks, isList = true)

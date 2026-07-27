@@ -3,11 +3,13 @@ package org.qosp.notes.data.sync.nextcloud
 import android.util.Log
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.qosp.notes.data.model.Attachment
 import org.qosp.notes.data.model.IdMapping
 import org.qosp.notes.data.model.Note
 import org.qosp.notes.data.sync.asSyncNote
 import org.qosp.notes.data.sync.core.AvailabilityStatus
 import org.qosp.notes.data.sync.core.ISyncBackend
+import org.qosp.notes.data.sync.core.SyncAttachment
 import org.qosp.notes.data.sync.core.SyncNote
 import org.qosp.notes.data.sync.nextcloud.model.asNextcloudNote
 import org.qosp.notes.preferences.CloudService
@@ -17,6 +19,7 @@ import kotlin.time.TimeSource
 class NextcloudBackend(
     private val apiProvider: NextcloudAPIProvider,
     private val config: NextcloudConfig,
+    private val attachmentSync: NextcloudAttachmentSync,
     private val timeSource: TimeSource = TimeSource.Monotonic
 ) : ISyncBackend {
 
@@ -65,16 +68,32 @@ class NextcloudBackend(
     override suspend fun createNote(note: Note): SyncNote {
         Log.d(tag, "createNote() called with: note = ${note.title}")
         val api = apiProvider.getAPI()
-        return api.createNote(note.asNextcloudNote(0, ""), config).asSyncNote()
+        // Images go up first: the note carries only references to them, so a
+        // note that arrived before its blobs would point at nothing.
+        val attachments = attachmentSync.push(note, api, config)
+        return api.createNote(note.asNextcloudNote(0, "", attachments), config).asSyncNote()
     }
 
     override suspend fun updateNote(note: Note, mapping: IdMapping): IdMapping {
         requireNotNull(mapping.remoteNoteId) { "Remote note id is null." }
         Log.d(tag, "updateNote: ${note.title}")
         val api = apiProvider.getAPI()
-        val nNote = note.asNextcloudNote(mapping.remoteNoteId, "")
+        val attachments = attachmentSync.push(note, api, config)
+        val nNote = note.asNextcloudNote(mapping.remoteNoteId, "", attachments)
         val updatedNote = api.updateNote(nNote, mapping.extras ?: "", config)
         return mapping.copy(remoteNoteId = updatedNote.id, extras = updatedNote.etag)
+    }
+
+    override suspend fun resolveAttachments(
+        remote: List<SyncAttachment>,
+        local: List<Attachment>,
+    ): List<Attachment> = try {
+        attachmentSync.pull(remote, local, apiProvider.getAPI(), config)
+    } catch (e: Exception) {
+        // Keeping what the phone has is the safe failure: the note is still
+        // newer on the server, so the next sync tries again.
+        Log.e(tag, "resolveAttachments: ${e.message}", e)
+        local
     }
 
     override suspend fun deleteNote(mapping: IdMapping): Boolean = try {

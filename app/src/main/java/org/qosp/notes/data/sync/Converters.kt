@@ -2,6 +2,7 @@ package org.qosp.notes.data.sync
 
 import org.qosp.notes.data.model.IdMapping
 import org.qosp.notes.data.model.Note
+import org.qosp.notes.data.sync.core.SyncAttachment
 import org.qosp.notes.data.sync.core.SyncNote
 import org.qosp.notes.data.sync.nextcloud.NextcloudNote
 import org.qosp.notes.preferences.CloudService
@@ -16,6 +17,18 @@ fun NextcloudNote.asSyncNote() = SyncNote(
     category = category,
     favorite = favorite,
     readOnly = readOnly == true,
+    // A server that does not know about attachments omits the field, which is
+    // indistinguishable from a note that has none — neither can take an image
+    // away from the phone, since only an uploaded one is ever dropped locally.
+    attachments = attachments.orEmpty().map {
+        SyncAttachment(
+            hash = it.hash,
+            type = it.type,
+            mime = it.mime,
+            name = it.name,
+            description = it.description,
+        )
+    },
 )
 
 // Convert SyncNote to local Note with full content

@@ -20,6 +20,7 @@ class NextcloudBackendTest {
 
     private val apiProvider = mockk<NextcloudAPIProvider>()
     private val api = mockk<NextcloudAPI>()
+    private val attachmentSync = mockk<NextcloudAttachmentSync>(relaxed = true)
     private lateinit var config: NextcloudConfig
     private val timeSource = TestTimeSource()
 
@@ -34,7 +35,7 @@ class NextcloudBackendTest {
         every { Log.d(any(), any()) } returns 0
 
         config = NextcloudConfig("http://localhost", "user", "pass")
-        backend = NextcloudBackend(apiProvider, config, timeSource)
+        backend = NextcloudBackend(apiProvider, config, attachmentSync, timeSource)
         coEvery { apiProvider.getAPI() } returns api
     }
 

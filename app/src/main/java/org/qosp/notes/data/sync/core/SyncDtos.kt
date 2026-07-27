@@ -24,4 +24,19 @@ data class SyncNote(
     val category: String = "",
     val favorite: Boolean? = null,
     val readOnly: Boolean = false,
+    val attachments: List<SyncAttachment> = listOf(),
+)
+
+/**
+ * A file attached to a remote note, as a reference rather than the bytes: the
+ * hash addresses it in the backend's store. Turning one of these into a local
+ * [org.qosp.notes.data.model.Attachment] means downloading it, which is the
+ * backend's job — see [ISyncBackend.resolveAttachments].
+ */
+data class SyncAttachment(
+    val hash: String,
+    val type: String = "IMAGE",
+    val mime: String = "",
+    val name: String = "",
+    val description: String = "",
 )
