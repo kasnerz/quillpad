@@ -31,6 +31,34 @@ fun NextcloudNote.asSyncNote() = SyncNote(
     },
 )
 
+// A checklist line in the format taskListToMd() writes and mdToTaskList()
+// reads. The Notes API has no field for list-ness, so a task list travels as
+// markdown and arrives looking like any other note — the same rule the server
+// applies in inferNoteType() is what turns it back into a list here.
+private val checklistLine = Regex("""^\s*[-+*] *\[[ xX]] ?.*$""")
+
+private fun isChecklistMarkdown(content: String): Boolean {
+    var found = false
+    for (line in content.lines()) {
+        if (line.isBlank()) continue
+        if (!checklistLine.matches(line)) return false
+        found = true
+    }
+    return found
+}
+
+/**
+ * Decides list-ness from the content that came off the server, so a note whose
+ * every line is a checkbox becomes a real task list rather than a text note
+ * rendered as markdown — and one that stopped being a checklist elsewhere stops
+ * being a list here.
+ */
+fun Note.withListStateFromContent(): Note = when {
+    isChecklistMarkdown(content) -> copy(isList = true, taskList = mdToTaskList(content), content = "")
+    isList -> copy(isList = false, taskList = listOf())
+    else -> this
+}
+
 // Convert SyncNote to local Note with full content
 fun SyncNote.toLocalNote(defaultPinned: Boolean) = Note(
     id = 0L, // Will be assigned by a database
@@ -40,7 +68,7 @@ fun SyncNote.toLocalNote(defaultPinned: Boolean) = Note(
     modifiedDate = lastModified,
     notebookId = null, // TODO: Handle category to notebook conversion if needed
     isMarkdownEnabled = true // Default to Markdown enabled
-)
+).withListStateFromContent()
 
 fun SyncNote.updateLocalNote(localNote: Note) = localNote.copy(
     title = title,

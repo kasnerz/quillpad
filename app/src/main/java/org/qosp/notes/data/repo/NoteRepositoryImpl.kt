@@ -28,6 +28,7 @@ import org.qosp.notes.data.sync.core.SynchronizeNotes
 import org.qosp.notes.data.sync.getMapping
 import org.qosp.notes.data.sync.toLocalNote
 import org.qosp.notes.data.sync.updateLocalNote
+import org.qosp.notes.data.sync.withListStateFromContent
 import org.qosp.notes.di.SyncScope
 import org.qosp.notes.preferences.CloudService
 import org.qosp.notes.preferences.SortMethod
@@ -127,12 +128,11 @@ class NoteRepositoryImpl(
                                     action.note.attachments,
                                 )
                             )
-                        val note = if (action.note.isList) {
-                            val tasks = mergedNote.mdToTaskList(mergedNote.content)
-                            mergedNote.copy(content = "", taskList = tasks, isList = true)
-                        } else {
-                            mergedNote
-                        }
+                        // Read from the content rather than from what the note
+                        // used to be: a note imported straight into the server
+                        // arrives as a text note the first time and only its
+                        // checkboxes say that it is a list.
+                        val note = mergedNote.withListStateFromContent()
                         idMappingDao.updateNoteExtras(
                             localId = action.note.id,
                             cloudService = syncProvider.type,
