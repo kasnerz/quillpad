@@ -3,6 +3,7 @@ package org.qosp.notes.data.sync.nextcloud.model
 import org.qosp.notes.data.model.Note
 import org.qosp.notes.data.sync.nextcloud.NextcloudAttachment
 import org.qosp.notes.data.sync.nextcloud.NextcloudNote
+import org.qosp.notes.data.sync.nextcloud.asNextcloudColor
 
 /**
  * @param attachments the note's images as the server knows them, or null to
@@ -20,4 +21,7 @@ fun Note.asNextcloudNote(
     favorite = isPinned,
     modified = modifiedDate,
     attachments = attachments,
+    // Always sent, default included: the empty string is what clears a colour,
+    // and omitting it would leave the server holding the old one forever.
+    color = this.color.asNextcloudColor(),
 )

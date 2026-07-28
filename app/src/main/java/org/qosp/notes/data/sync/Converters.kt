@@ -2,9 +2,11 @@ package org.qosp.notes.data.sync
 
 import org.qosp.notes.data.model.IdMapping
 import org.qosp.notes.data.model.Note
+import org.qosp.notes.data.model.NoteColor
 import org.qosp.notes.data.sync.core.SyncAttachment
 import org.qosp.notes.data.sync.core.SyncNote
 import org.qosp.notes.data.sync.nextcloud.NextcloudNote
+import org.qosp.notes.data.sync.nextcloud.toNoteColorOrNull
 import org.qosp.notes.preferences.CloudService
 
 fun NextcloudNote.asSyncNote() = SyncNote(
@@ -29,6 +31,7 @@ fun NextcloudNote.asSyncNote() = SyncNote(
             description = it.description,
         )
     },
+    color = color.toNoteColorOrNull(),
 )
 
 // A checklist line in the format taskListToMd() writes and mdToTaskList()
@@ -67,7 +70,8 @@ fun SyncNote.toLocalNote(defaultPinned: Boolean) = Note(
     isPinned = favorite ?: defaultPinned,
     modifiedDate = lastModified,
     notebookId = null, // TODO: Handle category to notebook conversion if needed
-    isMarkdownEnabled = true // Default to Markdown enabled
+    isMarkdownEnabled = true, // Default to Markdown enabled
+    color = color ?: NoteColor.Default,
 ).withListStateFromContent()
 
 fun SyncNote.updateLocalNote(localNote: Note) = localNote.copy(
@@ -75,6 +79,7 @@ fun SyncNote.updateLocalNote(localNote: Note) = localNote.copy(
     content = content ?: "",
     isPinned = favorite ?: localNote.isPinned,
     modifiedDate = lastModified,
+    color = color ?: localNote.color,
 )
 
 fun SyncNote.getMapping(noteId: Long, service: CloudService) = IdMapping(

@@ -1,6 +1,7 @@
 package org.qosp.notes.data.sync.core
 
 import org.qosp.notes.data.model.Note
+import org.qosp.notes.data.model.NoteColor
 
 // Sealed class to represent remote operations
 sealed class RemoteOperation {
@@ -25,6 +26,8 @@ data class SyncNote(
     val favorite: Boolean? = null,
     val readOnly: Boolean = false,
     val attachments: List<SyncAttachment> = listOf(),
+    /** Null when the backend has no colour to report; the local one then stands. */
+    val color: NoteColor? = null,
 )
 
 /**
