@@ -24,4 +24,8 @@ fun Note.asNextcloudNote(
     // Always sent, default included: the empty string is what clears a colour,
     // and omitting it would leave the server holding the old one forever.
     color = this.color.asNextcloudColor(),
+    // Always sent, false included: the patch on the server only writes fields
+    // the body names, so omitting it would leave an unarchive on the phone
+    // invisible there.
+    archived = isArchived,
 )

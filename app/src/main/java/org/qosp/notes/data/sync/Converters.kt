@@ -32,6 +32,7 @@ fun NextcloudNote.asSyncNote() = SyncNote(
         )
     },
     color = color.toNoteColorOrNull(),
+    archived = archived,
 )
 
 // A checklist line in the format taskListToMd() writes and mdToTaskList()
@@ -72,6 +73,7 @@ fun SyncNote.toLocalNote(defaultPinned: Boolean) = Note(
     notebookId = null, // TODO: Handle category to notebook conversion if needed
     isMarkdownEnabled = true, // Default to Markdown enabled
     color = color ?: NoteColor.Default,
+    isArchived = archived == true,
 ).withListStateFromContent()
 
 fun SyncNote.updateLocalNote(localNote: Note) = localNote.copy(
@@ -80,6 +82,7 @@ fun SyncNote.updateLocalNote(localNote: Note) = localNote.copy(
     isPinned = favorite ?: localNote.isPinned,
     modifiedDate = lastModified,
     color = color ?: localNote.color,
+    isArchived = archived ?: localNote.isArchived,
 )
 
 fun SyncNote.getMapping(noteId: Long, service: CloudService) = IdMapping(

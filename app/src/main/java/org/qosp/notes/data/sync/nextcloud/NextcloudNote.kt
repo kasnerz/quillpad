@@ -31,6 +31,13 @@ data class NextcloudNote(
      * must not reset the colour the phone holds.
      */
     val color: String? = null,
+    /**
+     * Whether the note sits in the archive rather than the notes list.
+     *
+     * Null is "not mentioned" once more: a stock Nextcloud has no archive, and
+     * a pull from one must not un-archive everything the phone holds.
+     */
+    val archived: Boolean? = null,
 )
 
 /** The empty string for [NoteColor.Default], so the phone stores what the web app stores. */

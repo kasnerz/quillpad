@@ -28,6 +28,8 @@ data class SyncNote(
     val attachments: List<SyncAttachment> = listOf(),
     /** Null when the backend has no colour to report; the local one then stands. */
     val color: NoteColor? = null,
+    /** Null when the backend has no archive of its own; the local flag then stands. */
+    val archived: Boolean? = null,
 )
 
 /**
